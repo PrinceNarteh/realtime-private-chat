@@ -1,3 +1,4 @@
+import { Providers } from "@/components/providers";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -6,16 +7,16 @@ const jetBrainsMono = localFont({
   src: [
     {
       path: "../../public/fonts/JetBrainsMono-Regular.ttf",
-      style: "normal"
+      style: "normal",
     },
     {
       path: "../../public/fonts/JetBrainsMono-Italic.ttf",
-      style: "italic"
-    }
+      style: "italic",
+    },
   ],
   display: "swap",
-  variable: "--font-jetbrains-mono"
-})
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -29,10 +30,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${jetBrainsMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${jetBrainsMono.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
