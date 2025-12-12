@@ -5,7 +5,7 @@ import { useUsername } from "@/hooks/useUsername";
 import { api } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
@@ -24,6 +24,10 @@ const Page = () => {
   const router = useRouter();
   const params = useParams();
   const roomId = params.roomId as string;
+
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  const wasDestroyed = searchParams.get("destroyed") === "true";
 
   const copyLink = () => {
     const url = window.location.href;
