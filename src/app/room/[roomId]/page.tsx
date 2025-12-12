@@ -5,8 +5,8 @@ import { useUsername } from "@/hooks/useUsername";
 import { api } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -25,16 +25,46 @@ const Page = () => {
   const params = useParams();
   const roomId = params.roomId as string;
 
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
-  const wasDestroyed = searchParams.get("destroyed") === "true";
-
   const copyLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     setCopyStatus("COPIED!");
     setTimeout(() => setCopyStatus("COPY"), 2000);
   };
+
+  const { data: ttlData } = useQuery({
+    queryKey: ["ttl", roomId],
+    queryFn: async () => {
+      const res = await api.rooms.ttl.get({ query: { roomId } });
+      return res.data;
+    },
+  });
+
+  useEffect(() => {
+    if (ttlData?.ttl !== undefined) {
+      setTimeRemaining(ttlData.ttl);
+    }
+  }, [ttlData]);
+
+  useEffect(() => {
+    if (timeRemaining === null || timeRemaining < 0) return;
+
+    if (timeRemaining === 0) {
+      router.push("/?destroyed=true");
+      return;
+    }
+
+    const interval = setInterval((prev) => {
+      if (prev === null || prev <= 1) {
+        clearInterval(interval);
+        return 0;
+      }
+
+      return prev - 1;
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeRemaining, router]);
 
   const { mutate: sendMessage, isPending } = useMutation({
     mutationFn: async ({ text }: { text: string }) => {
