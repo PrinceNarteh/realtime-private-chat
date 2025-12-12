@@ -1,3 +1,4 @@
+import { realtime } from "@/lib/realtime";
 import { redis } from "@/lib/redis";
 import Elysia from "elysia";
 import { nanoid } from "nanoid";
@@ -27,6 +28,23 @@ export const rooms = new Elysia({ prefix: "/rooms" })
       return {
         ttl: ttl > 0 ? ttl : 0,
       };
+    },
+    { query: z.object({ roomId: z.string() }) },
+  )
+  .delete(
+    "/",
+    async ({ auth }) => {
+      const roomId = auth.roomId;
+
+      await realtime
+        .channel(roomId)
+        .emit("chat.destroy", { isDestroyed: true });
+
+      await Promise.all([
+        redis.del(auth.roomId),
+        redis.del(`meta:${roomId}`),
+        redis.del(`messages:${roomId}`),
+      ]);
     },
     { query: z.object({ roomId: z.string() }) },
   );

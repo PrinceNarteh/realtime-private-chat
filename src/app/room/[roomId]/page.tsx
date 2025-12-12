@@ -102,7 +102,11 @@ const Page = () => {
     },
   });
 
-  const destroyRoom = () => {};
+  const { mutate: destroyRoom } = useMutation({
+    mutationFn: async () => {
+      await api.rooms.delete(null, { query: { roomId } });
+    },
+  });
 
   return (
     <main className="h-screen max-h-screen flex flex-col overflow-hidden">
