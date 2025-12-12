@@ -13,6 +13,7 @@ export const messages = new Elysia({ prefix: "/messages" })
       const { sender, text } = body;
       const { roomId } = auth;
       const roomIdWithMeta = `meta:${roomId}`;
+      const roomIdWithMessages = `messages:${roomId}`;
 
       const roomExists = await redis.exists(roomIdWithMeta);
       if (!roomExists) {
@@ -27,8 +28,15 @@ export const messages = new Elysia({ prefix: "/messages" })
         timestamp: Date.now(),
       };
 
-      await redis.rpush(`message:${roomId}`, { ...message, token: auth.token });
+      // add message to history
+      await redis.rpush(roomIdWithMessages, { ...message, token: auth.token });
       await realtime.channel(roomId).emit("chat.message", message);
+
+      // housekeeping
+      const remainingTime = await redis.ttl(roomIdWithMeta);
+      await redis.expire(roomIdWithMessages, remainingTime);
+      await redis.expire(`history:${roomId}`, remainingTime);
+      await redis.expire(roomId, remainingTime);
     },
     {
       query: z.object({ roomId: z.string() }),
