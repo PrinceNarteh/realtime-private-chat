@@ -3,22 +3,17 @@
 import { useRealtime } from "@/hooks/realtime";
 import { useUsername } from "@/hooks/useUsername";
 import { api } from "@/lib/api";
+import { formatTimeRemaining } from "@/utils/formatTimeRemaining";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-function formatTimeRemaining(seconds: number) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 const Page = () => {
   const { username } = useUsername();
+  const [input, setInput] = useState("");
   const [copyStatus, setCopyStatus] = useState("COPY");
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
@@ -54,13 +49,14 @@ const Page = () => {
       return;
     }
 
-    const interval = setInterval((prev) => {
-      if (prev === null || prev <= 1) {
-        clearInterval(interval);
-        return 0;
-      }
-
-      return prev - 1;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(interval);

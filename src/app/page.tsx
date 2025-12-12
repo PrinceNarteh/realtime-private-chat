@@ -4,8 +4,9 @@ import { useUsername } from "@/hooks/useUsername";
 import { api } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function Home() {
+function HomePage() {
   const router = useRouter();
   const { username } = useUsername();
 
@@ -16,6 +17,7 @@ export default function Home() {
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
       const res = await api.rooms.create.post();
+      console.log(res);
 
       if (res.status === 200) {
         router.push(`/room/${res.data?.roomId}`);
@@ -81,3 +83,13 @@ export default function Home() {
     </main>
   );
 }
+
+const Page = () => {
+  return (
+    <Suspense>
+      <HomePage />
+    </Suspense>
+  );
+};
+
+export default Page;
