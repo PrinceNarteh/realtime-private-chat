@@ -1,6 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useRealtime } from "@/hooks/realtime";
+import { useUsername } from "@/hooks/useUsername";
+import { api } from "@/lib/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 function formatTimeRemaining(seconds: number) {
@@ -10,11 +15,13 @@ function formatTimeRemaining(seconds: number) {
 }
 
 const Page = () => {
+  const { username } = useUsername();
   const [copyStatus, setCopyStatus] = useState("COPY");
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [input, setInpur] = useState("");
+  const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const router = useRouter();
   const params = useParams();
   const roomId = params.roomId as string;
 
@@ -24,6 +31,42 @@ const Page = () => {
     setCopyStatus("COPIED!");
     setTimeout(() => setCopyStatus("COPY"), 2000);
   };
+
+  const { mutate: sendMessage, isPending } = useMutation({
+    mutationFn: async ({ text }: { text: string }) => {
+      await api.messages.post(
+        {
+          sender: username,
+          text,
+        },
+        { query: { roomId } },
+      );
+
+      setInput("");
+    },
+  });
+
+  const { data: messages, refetch } = useQuery({
+    queryKey: ["messages", roomId],
+    queryFn: async () => {
+      const res = await api.messages.get({ query: { roomId } });
+      return res.data;
+    },
+  });
+
+  useRealtime({
+    channels: [roomId],
+    events: ["chat.message", "chat.destroy"],
+    onData: ({ event }) => {
+      if (event === "chat.message") {
+        refetch();
+      }
+
+      if (event === "chat.destroy") {
+        router.push("/?destroy=true");
+      }
+    },
+  });
 
   const destroyRoom = () => {};
 

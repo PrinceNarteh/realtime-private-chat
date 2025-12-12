@@ -1,34 +1,13 @@
 "use client";
 
+import { useUsername } from "@/hooks/useUsername";
 import { api } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
-import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-const ANIMALS = [
-  "lion",
-  "bear",
-  "elephant",
-  "giraffe",
-  "penguin",
-  "kangaroo",
-  "dolphin",
-  "zebra",
-  "cheetah",
-  "ostrich",
-  "chimpanzee",
-];
-const STORAGE_KEY = "chat_username";
-
-const generateUsername = () => {
-  const username = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `anonymous-${username}-${nanoid(5)}`;
-};
 
 export default function Home() {
-  const [username, setUsername] = useState("");
   const router = useRouter();
+  const { username } = useUsername();
 
   const { mutate: createRoom } = useMutation({
     mutationFn: async () => {
@@ -39,22 +18,6 @@ export default function Home() {
       }
     },
   });
-
-  useEffect(() => {
-    const main = () => {
-      const storedUsername = localStorage.getItem(STORAGE_KEY);
-      if (storedUsername) {
-        setUsername(storedUsername);
-        return;
-      }
-
-      const generatedUsername = generateUsername();
-      localStorage.setItem(STORAGE_KEY, generatedUsername);
-      setUsername(generatedUsername);
-    };
-
-    main();
-  }, []);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
